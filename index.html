@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body onload="onInit()">
+    <div class="header">
+        <img src="./img/logo.png" alt="" class="logo-img">
+        <h1 class="shop-h1">My Book Shop</h1>
+        <div class="navigation-bar-btn"><img src="./img/hamburger-bar.jpg" alt="" onclick="toggleMenu()"></div>
+    </div>
+    <div class="background-books-img"></div>
+    <div class="side-bars-container side-bars-container-mobile">
+        <div class="left-side-bar ">
+            <div class="layout-btn-container">
+                <div class="sort-btns-container"></div>
+                <div class="layout-btns-container">
+                    <button onclick="onChangeLayout('grid')" class="grid-btn active-layout-btn"><img
+                            class="layout-btn-img" src="./img/grid-white.png"></img></button>
+                    <button onclick="onChangeLayout('table')" class="table-btn"><img class="layout-btn-img"
+                            src="./img/table-orange.png"></img></button>
+                </div>
+            </div>
+            <div class="add-book-btn-container">
+                <button onclick="onAddBook()">Create new book</button>
+            </div>
+        </div>
+        <div class="filter-container ">
+            <label>
+                Max Price:
+                <input type="range" min="0" max="300" value="300" class="filter-price-range"
+                    onchange="this.title=this.value;onSetFilterBy({maxPrice : this.value})" />
+            </label>
+            <label>
+                Min Rate:
+                <input type="range" min="0" max="10" value="1" class="filter-rate-range"
+                    onchange="this.title=this.value;onSetFilterBy({minRate: this.value})" />
+            </label>
+            <label>
+                Find Book:
+                <input type="text" value="" class="filter-text"
+                    oninput="this.title=this.value;onSetFilterBy({txt: this.value})" />
+            </label>
+        </div>
+    </div>
+    <div class="modal-container"></div>
+    <div class="books-container"></div>
+    <div class="paging-container"></div>
+
+    <script src="js/services/utils.service.js"></script>
+    <script src="js/services/storage.service.js"></script>
+    <script src="js/services/bookshop.service.js"></script>
+    <script src="js/main.controller.js"></script>
+</body>
+
+</html>
