@@ -4,7 +4,7 @@ var gMenuVisible = false;
 
 function onInit() {
     renderFilterByQueryStringParams();
-    renderBooks();
+    renderLang(getCurrLang());
     renderModal(getModalByQueryStringParams());
     renderPageBtns();
 }
@@ -17,7 +17,8 @@ function renderBooks() {
     } else {
         renderTable(books);
     }
-    if (books.length === 0) return document.querySelector('.books-container').innerHTML += `<h1 class="no-res-h1">No Result</h1>`
+    if (books.length === 0) document.querySelector('.books-container').innerHTML = `<h1 class="no-res-h1" data-trans="no-result">No Result</h1>`;
+    doTrans(getCurrLang());
 }
 
 function renderTable(books) {
@@ -26,10 +27,11 @@ function renderTable(books) {
         <table>
             <thead>
                 <tr>
-                    <th>Id</th>
-                    <th onclick="onSort({name:true})" class="sort-table-th" >Title</th>
-                    <th onclick="onSort({price:true})" class="sort-table-th" >Price</th>
-                    <th>Actions</th>            
+                    <th data-trans="id">Id</th>
+                    <th data-trans="title" onclick="onSort({name:true})" class="sort-table-th" >Title</th>
+                    <th data-trans="price" onclick="onSort({price:true})" class="sort-table-th" >Price</th>
+                    <th data-trans="rate">Rate</th>            
+                    <th data-trans="actions">Actions</th>            
                 </tr>
             </thead>
             <tbody class="table-tbody"></tbody>
@@ -40,18 +42,20 @@ function renderTable(books) {
     books.map(book => {
         tableBooksStr += `<tr>`;
         for (const prop in book) {
-            if (prop === 'rate' || prop === 'bookContent') continue;
-            if (prop === 'imgUrl') {
-                tableBooksStr += getBtnsStr(book.id);
-                continue;
-            }
-            tableBooksStr += `<td>${book[prop]}</td>`
+            if (prop === 'bookContent' || prop === 'imgUrl') continue;     
+            let value = prop === 'name' || prop === 'bookContent' ? book[prop][getCurrLang()] : book[prop];
+            if(prop === 'rate'){
+                value = getStartsStr(book[prop])
+            }       
+            tableBooksStr += `<td class="${prop}-table-td">${value}</td>`
         }
+        tableBooksStr += getBtnsStr(book.id);
         tableBooksStr += '</tr>';
     });
     tableBooksStr = tableBooksStr.slice(0, tableBooksStr.length - 10)
     document.querySelector('.books-container').innerHTML = tableStr;
     document.querySelector('.table-tbody').innerHTML = tableBooksStr;
+    // doTrans(getCurrLang(),'.table-container')
 }
 
 function renderBooksGrid(books) {
@@ -59,23 +63,26 @@ function renderBooksGrid(books) {
         `
    
     
-        <p class="sort-by-p">Sort By:<p/>
-        <button onclick="onSort({name:true})">Title</button>
-        <button onclick="onSort({price:true})">Price</button>
+        <div>
+            <p class="sort-by-p" data-trans="sort-by" style="display:inline-block">Sort By </p>:
+        </div>
+        <button onclick="onSort({name:true})" data-trans="title">Title</button>
+        <button onclick="onSort({price:true})" data-trans="price">Price</button>
     `
     const gridBooksStr =
         `
     <div class="books-grid-container"> 
     ${books.map(book =>
             `<div class="book">
-                <img src="${book.imgUrl}"  onerror="this.src = 'img/book${book.id % 7}.jpg'"></img>
+                <img src="${book.imgUrl}" onerror="this.src = 'img/book${book.id % 7}.jpg'"></img>
                 <div class="book-content-container">
-                    <h5>${book.name}</h5>
-                    <h5>$${book.price}</h5>
+                    <h5>${book.name[getCurrLang()]}</h5>
+                    <h5 class="ltr">${localePrice(book.price)}</h5>
                 </div>
                 <div class="grid-btns-container">
                     ${getBtnsStr(book.id)}
                 </div>
+                <div class="stars">${getStartsStr(book.rate)}</div>
             </div>
    `
         ).join('')}
@@ -85,10 +92,22 @@ function renderBooksGrid(books) {
     document.querySelector('.sort-btns-container').innerHTML = leftSideBarStr;
 }
 
+function getStartsStr(num){
+    let str = ''
+    while(num){
+        str+= '★'
+        num--;
+    }
+    while(str.length < getMinRate()){
+        str+= '☆'
+    }
+    return str;
+}
+
 function getBtnsStr(bookId) {
-    return `<td><button onclick="onReadBook(${bookId})">Read</button></td>
-            <td><button onclick="onUpdateBook(${bookId})">Update</button></td>
-            <td><button onclick="onRemoveBook(${bookId})">Delete</button></td>`
+    return `<td><button onclick="onReadBook(${bookId})" data-trans="read">Read</button></td>
+            <td><button onclick="onUpdateBook(${bookId})" data-trans="update-price">Update</button></td>
+            <td><button onclick="onRemoveBook(${bookId})" data-trans="delete-book">Delete</button></td>`
 }
 
 function renderPageBtns() {
@@ -118,6 +137,8 @@ function renderFilterByQueryStringParams() {
 
 function setFilterByQueryStringParams() {
     const queryStringParams = new URLSearchParams(window.location.search);
+    const queryLangStr = queryStringParams.get('lang');
+    setCurrLang(queryLangStr ? queryLangStr : 'en');
     const filterBy = {
         maxPrice: queryStringParams.get('maxPrice') || 200,
         minRate: queryStringParams.get('minRate') || 0,
@@ -138,19 +159,19 @@ function onPaging(param) {
 
 function renderModal(bookId) {
     if (bookId === null) return;
-    updateUrl(getGfilterBy(), bookId);
+    updateUrl(getGfilterBy(), bookId, getCurrLang());
     document.querySelector('.modal-container').innerHTML =
         `
     <div class="modal modal-left-transition">
         <div class="modal-header">
-            <h5>${getBookValue(bookId, 'name')}</h5>
+            <h5>${getBookValue(bookId, 'name')[getCurrLang()]}</h5>
             <button onclick="removeModal()">X</button>
         </div>
         <div>
-        <p>${getBookValue(bookId, 'bookContent')}</p>
+        <p>${getBookValue(bookId, 'bookContent')[getCurrLang()]}</p>
         </div>
             <div class="rate-container">
-                <h5>rate:</h5>
+                <h5 data-trans="rate">${getTrans('rate')}</h5>:
                 <div class="rate-btn-container">
                     <button onclick="onChangeRate(${bookId},1)">+</button>
                     <span class="current-book-rate"></span>
@@ -168,7 +189,7 @@ function renderModalBookRate(bookId) {
 
 function removeModal() {
     document.querySelector('.modal-container').innerHTML = '';
-    updateUrl(getGfilterBy(), null);
+    updateUrl(getGfilterBy(), null, getCurrLang());
 }
 
 function onReadBook(bookId) {
@@ -191,7 +212,7 @@ function onUpdateBook(bookId) {
 function onRemoveBook(bookId) {
     removeBook(bookId);
     if (getModalId() === -1) {
-        updateUrl(getGfilterBy(), -1);
+        updateUrl(getGfilterBy(), -1, getCurrLang());
         removeModal();
     }
     renderBooks();
@@ -206,12 +227,12 @@ function onAddBook() {
 
 function onSetFilterBy(filterBy) {
     filterBy = setBookFilter(filterBy);
-    updateUrl(filterBy, getModalId())
+    updateUrl(filterBy, getModalId(), getCurrLang())
     renderBooks();
 }
 
-function updateUrl(filterBy, modalId) {
-    const queryStringParams = `?maxPrice=${filterBy.maxPrice}&minRate=${filterBy.minRate}&txt=${filterBy.txt}${modalId ? `&modalId=${modalId}` : ''}`;
+function updateUrl(filterBy, modalId, currLang) {
+    const queryStringParams = `?lang=${currLang}&maxPrice=${filterBy.maxPrice}&minRate=${filterBy.minRate}&txt=${filterBy.txt}${modalId ? `&modalId=${modalId}` : ''}`;
     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + queryStringParams
     window.history.pushState({ path: newUrl }, '', newUrl)
 }
@@ -236,20 +257,19 @@ function renderNewPricePrompt(bookId) {
     document.querySelector('body').appendChild(container);
     document.querySelector('.prompted-input-container').innerHTML =
         `
-        <div class="prompted-input-container">
+       
             <div class="txt-start enter-price-container">
-                <label>New Price:</label>
+                <label><span data-trans="new-price"></span>:</label>
                 <input type="text" value="" oninput="this.title=this.value" class="prompted-input"></input>
-           
             </div>
             <div>
-                <button onclick="onConfirmNewPrice(${bookId})">confirm</button>
-                <button onclick="removeCustomPropmpt()">deny</button>
+                <button onclick="onConfirmNewPrice(${bookId})" data-trans="confirm"></button>
+                <button onclick="removeCustomPropmpt()" data-trans="deny"></button>
             </div>
-        </div>
+      
     `
     enablePointerEvents('.prompted-input-container');
-
+    doTrans(getCurrLang(),'.prompted-input-container')
 }
 
 function onConfirmNewPrice(bookId) {
@@ -270,42 +290,57 @@ function renderCustomNewBookPrompt() {
     const htmlStr =
         `
             <div class="txt-start enter-name-container">
-                <label>Book Name:</label>
-                <input type="text" value="" oninput="this.title=this.value" placeholder="enter book name" class="prompted-name-input"></input>
+                <label data-trans="book-name">Book Name</label>:
+                <input type="text" value="" oninput="this.title=this.value" placeholder="enter book name" 
+                data-trans="enter-name-placeholder" class="prompted-name-input"></input>
+            </div>
+            <div class="txt-start enter-hebrew-name-container">
+                <label data-trans="book-name-hebrew">Book Name Hebrews</label>:
+                <input type="text" value="" oninput="this.title=this.value" placeholder="enter hebrew book name" 
+                data-trans="enter-hebrew-name-placeholder" class="prompted-hebrew-name-input"></input>
             </div>
             <div class="txt-start enter-price-container">
-                <label>Book Price:</label>
-                <input type="text" value="" oninput="this.title=this.value" placeholder="enter book price"class="prompted-price-input"></input>
+                <label data-trans="price-of-book">Book Price</label>:
+                <input type="text" value="" oninput="this.title=this.value" placeholder="enter book price" 
+                data-trans="enter-price-placeholder" class="prompted-price-input"></input>
             </div> 
             <div>
-                <button onclick="onConfirmNewBook()">add</button>
-                <button onclick="removeCustomPropmpt()">cancel</button>
+                <button onclick="onConfirmNewBook()" data-trans="add">add</button>
+                <button onclick="removeCustomPropmpt()" data-trans="cancel">cancel</button>
             </div>           
         `
     addChildElement('div', 'prompted-input-container', 'body', htmlStr);
     enablePointerEvents('.prompted-input-container');
+    doTrans(getCurrLang(), '.prompted-input-container')
 }
 
 function onConfirmNewBook() {
     enablePointerEvents('body');
     let name = document.querySelector('.prompted-name-input').value;
+    let hebName = document.querySelector('.prompted-hebrew-name-input').value;
     const error1 = document.querySelector('.error-msg1');
     const error2 = document.querySelector('.error-msg2');
+    const error3 = document.querySelector('.error-msg3');
     if (error1) error1.innerHTML = ''
     if (error2) error2.innerHTML = ''
+    if (error3) error3.innerHTML = ''
 
     let isValidInput = true;
     if (!name) {
         isValidInput = false
-        addChildElement('p', 'error-msg1', '.enter-name-container', 'enter valid name')
+        addChildElement('p', 'error-msg1', '.enter-name-container', getTrans('valid-name'))
+    }
+    if (!hebName) {
+        isValidInput = false
+        addChildElement('p', 'error-msg3', '.enter-hebrew-name-container', getTrans('valid-name'))
     }
     let price = document.querySelector('.prompted-price-input').value;
     if (+price > getMAX_PRICE() || +price < 0 || /\D|^$/g.test(price)) {
         isValidInput = false
-        addChildElement('p', 'error-msg2', '.enter-price-container', 'enter valid price')
+        addChildElement('p', 'error-msg2', '.enter-price-container', getTrans('valid-price'))
     }
     if (!isValidInput) return;
-    addBook(name, price);
+    addBook({ en: name, he: hebName }, price);
     removeCustomPropmpt();
     renderBooks();
 }
@@ -357,4 +392,38 @@ function toggleMenu() {
     if (!gMenuVisible) document.querySelector('.side-bars-container').classList.toggle('side-bars-container-mobile')
     else document.querySelector('.side-bars-container').classList.toggle('side-bars-container-mobile')
     gMenuVisible = !gMenuVisible;
+}
+
+// i18n
+
+function onLangChange(lang) {
+    updateUrl(getGfilterBy(), getModalId(), lang);
+    renderLang(lang);
+    renderModal(getModalId());
+}
+
+// CR: how should i do that?
+function renderLang(lang) {
+    if (lang === 'he') document.querySelector('body').classList.add('rtl');
+    else document.querySelector('body').classList.remove('rtl');
+    updateOptions(lang);
+    doTrans(lang);
+    renderBooks();
+}
+
+function updateOptions(lang) {
+    const langOptions = document.querySelectorAll('.lang-option');
+    langOptions.forEach(option => {
+        if (option.value === lang) {
+            option.disabled = true;
+            return option.selected = true;
+        }
+        option.disabled = false;
+        return option.selected = false;
+    });
+}
+
+function localePrice(price) {
+    if (getCurrLang() === 'he') return formatCurrencyISR(price);
+    else return formatCurrencyUSD(price)
 }

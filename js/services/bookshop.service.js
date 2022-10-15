@@ -1,6 +1,7 @@
 'use strict'
 
 const PAGE_SIZE = 8;
+const MIN_RATE = 5;
 const MAX_PRICE = 300;
 const DB_BOOKS = 'Books';
 const DB_LAYOUT_TYPE = 'layoutType';
@@ -27,8 +28,8 @@ function _createBooks() {
                 id: i,
                 name: makeLorem(1),
                 price: 10.05,
+                rate: 3,
                 imgUrl: `./img/book${i}.jpg`,
-                rate: 10,
                 bookContent:makeLorem()
             })   
         }
@@ -64,6 +65,10 @@ function getGpageIdx() {
     return gPageIdx;
 }
 
+function getMinRate() {
+    return MIN_RATE;
+}
+
 function setGpageIdx(value) {
     return gPageIdx = value;
 }
@@ -74,8 +79,10 @@ function setGModalId(modalId) {
 }
 
 function getBooks() {
-    const books = gBooks.filter(book => book.price <= gFilterBy.maxPrice && book.rate >=
-        gFilterBy.minRate && book.name.includes(gFilterBy.txt));
+    const currLang = getCurrLang();
+    const books = gBooks.filter(book => {
+        return book.price <= gFilterBy.maxPrice && book.rate >=
+        gFilterBy.minRate &&  book.name[currLang].includes(gFilterBy.txt)});
     const startIdx = gPageIdx * PAGE_SIZE;
     return books.slice(startIdx, startIdx + PAGE_SIZE);
 }
@@ -89,7 +96,7 @@ function getBookValue(bookId, key) {
 
 function updateRate(bookId, num) {
     let bookRate = gBooks.find(book => book.id === bookId);
-    if (bookRate['rate'] + num < 0 || bookRate['rate'] + num > 10) return;
+    if (bookRate['rate'] + num < 0 || bookRate['rate'] + num > MIN_RATE) return;
     bookRate['rate'] += num;
     saveToStorage(DB_BOOKS, gBooks);
 }
@@ -139,6 +146,6 @@ function setBooksSort(sortBy = {}) {
     if (sortBy.price !== undefined) {
         gBooks.sort((b1, b2) => b1.price - b2.price);
     } else if (sortBy.name !== undefined) {
-        gBooks.sort((b1, b2) => b1.name.localeCompare(b2.name));
+        gBooks.sort((b1, b2) => b1.name[getCurrLang()].localeCompare(b2.name[getCurrLang()]));
     }
 }

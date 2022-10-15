@@ -6,18 +6,25 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title data-trans="shop-title">My Book Shop</title>
 </head>
 
 <body onload="onInit()">
-    <div class="header">
+    <div class="header ltr">
         <img src="./img/logo.png" alt="" class="logo-img">
-        <h1 class="shop-h1">My Book Shop</h1>
+        <h1 class="shop-h1" data-trans="shop-title">My Book Shop</h1>
         <div class="navigation-bar-btn"><img src="./img/hamburger-bar.jpg" alt="" onclick="toggleMenu()"></div>
     </div>
     <div class="background-books-img"></div>
     <div class="side-bars-container side-bars-container-mobile">
         <div class="left-side-bar ">
+            <div>
+                <span data-trans="language">Language</span>:
+                <select onchange="onLangChange(this.value)">
+                    <option class="lang-option" data-trans="english" value="en">English</option>
+                    <option class="lang-option" data-trans="hebrew" value="he">Hebrew</option>
+                </select>
+            </div>
             <div class="layout-btn-container">
                 <div class="sort-btns-container"></div>
                 <div class="layout-btns-container">
@@ -28,22 +35,22 @@
                 </div>
             </div>
             <div class="add-book-btn-container">
-                <button onclick="onAddBook()">Create new book</button>
+                <button onclick="onAddBook()" data-trans="create-book">Create new book</button>
             </div>
         </div>
         <div class="filter-container ">
             <label>
-                Max Price:
+                <span data-trans="price">Price</span>:
                 <input type="range" min="0" max="300" value="300" class="filter-price-range"
                     onchange="this.title=this.value;onSetFilterBy({maxPrice : this.value})" />
             </label>
             <label>
-                Min Rate:
-                <input type="range" min="0" max="10" value="1" class="filter-rate-range"
+                <span data-trans="min-rate">Min Rate</span>:
+                <input type="range" min="0" max="5" value="1" class="filter-rate-range"
                     onchange="this.title=this.value;onSetFilterBy({minRate: this.value})" />
             </label>
             <label>
-                Find Book:
+                <span data-trans="find-book">Find Book</span>:
                 <input type="text" value="" class="filter-text"
                     oninput="this.title=this.value;onSetFilterBy({txt: this.value})" />
             </label>
@@ -51,10 +58,11 @@
     </div>
     <div class="modal-container"></div>
     <div class="books-container"></div>
-    <div class="paging-container"></div>
-
+    <div class="paging-container ltr"></div>
+    
     <script src="js/services/utils.service.js"></script>
     <script src="js/services/storage.service.js"></script>
+    <script src="js/services/i18n.service.js"></script>
     <script src="js/services/bookshop.service.js"></script>
     <script src="js/main.controller.js"></script>
 </body>
